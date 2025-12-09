@@ -17,7 +17,6 @@ import {
   MentionProvider,
   MentionSuggestion,
   useMentionState,
-  parseMentions,
 } from "react-native-docked-mentions";
 import { usePeopleSearch, useTopicSearch } from "../services/people-service";
 import { usePosts } from "../contexts/posts-context";
@@ -46,7 +45,8 @@ function PostInterface() {
   const postId = params.id as string | undefined;
 
   const [text, setText] = useState("");
-  const { currentQuery, activeTrigger, isMentioning } = useMentionState();
+  const { currentQuery, activeTrigger, isMentioning, mentions } =
+    useMentionState();
   const debouncedQuery = useDebounce(currentQuery, 300, activeTrigger);
   const { addPost, updatePost, posts } = usePosts();
 
@@ -117,50 +117,6 @@ function PostInterface() {
 
   const handlePost = () => {
     if (!text.trim()) return;
-
-    let mentions = parseMentions(text, [
-      { trigger: "@", allowedSpacesCount: 2 },
-      { trigger: "#" },
-    ]);
-
-    const allPeople = [...peopleData, ...preloadPeople];
-
-    mentions = mentions.map((m) => {
-      if (m.data.trigger === "@") {
-        const content = m.data.name;
-
-        const match = allPeople
-          .filter((p) => {
-            const pName = (p.data?.name as string) || p.display;
-            return content.toLowerCase().startsWith(pName.toLowerCase());
-          })
-          .sort((a, b) => {
-            const nameA = (a.data?.name as string) || a.display;
-            const nameB = (b.data?.name as string) || b.display;
-            return nameB.length - nameA.length;
-          })[0];
-
-        if (match) {
-          const realName = (match.data?.name as string) || match.display;
-          const validLength = realName.length;
-          m.end = m.start + 1 + validLength;
-          m.data.name = content.slice(0, validLength);
-          m.data.id = "@" + m.data.name;
-
-          m.data.meta = {
-            id: match.id,
-            avatar: match.data?.image,
-            jobTitle: match.data?.jobTitle,
-          };
-        } else {
-          const firstWord = content.split(/\s+/)[0];
-          m.end = m.start + 1 + firstWord.length;
-          m.data.name = firstWord;
-          m.data.id = "@" + firstWord;
-        }
-      }
-      return m;
-    });
 
     if (postId) {
       updatePost(postId, {

@@ -1,7 +1,7 @@
 import { useMention } from "./mention-provider";
 
 export function useMentionState() {
-  const { activeTrigger, currentQuery, isMentioning, insertMention } =
+  const { activeTrigger, currentQuery, isMentioning, insertMention, mentions } =
     useMention();
 
   return {
@@ -9,5 +9,6 @@ export function useMentionState() {
     currentQuery,
     isMentioning,
     insertMention,
+    mentions,
   };
 }

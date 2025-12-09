@@ -7,7 +7,8 @@ import React, {
   useRef,
   PropsWithChildren,
 } from "react";
-import { MentionTrigger, MentionSuggestion } from "./types";
+import { MentionTrigger, MentionSuggestion, MentionRange } from "./types";
+import { parseMentions } from "./mention-utils";
 
 const TRIGGER_LOOKBACK_LIMIT = 50;
 
@@ -16,6 +17,7 @@ interface MentionContextValue {
   currentQuery: string;
   insertMention: (suggestion: MentionSuggestion) => void;
   isMentioning: boolean;
+  mentions: MentionRange[];
   onInputStateChange: (
     text: string,
     selection: { start: number; end: number }
@@ -43,6 +45,7 @@ export function MentionProvider({
     start: number;
     end: number;
   } | null>(null);
+  const [mentions, setMentions] = useState<MentionRange[]>([]);
 
   const inputRef = useRef<{
     value: string;
@@ -52,6 +55,53 @@ export function MentionProvider({
 
   const insertingRef = useRef(false);
 
+  const mentionDataStore = useRef<Map<string, Record<string, unknown>>>(
+    new Map()
+  );
+
+  const getMentionKey = useCallback(
+    (trigger: string, name: string) => `${trigger}${name}`,
+    []
+  );
+
+  const updateMentions = useCallback(
+    (text: string) => {
+      const parsedMentions = parseMentions(text, triggers);
+
+      const enrichedMentions = parsedMentions.map((mention) => {
+        const key = getMentionKey(mention.data.trigger, mention.data.name);
+        const customData = mentionDataStore.current.get(key);
+
+        if (customData) {
+          return {
+            ...mention,
+            data: {
+              ...mention.data,
+              ...customData,
+            },
+          };
+        }
+
+        return mention;
+      });
+
+      const currentKeys = new Set(
+        enrichedMentions.map((m) => getMentionKey(m.data.trigger, m.data.name))
+      );
+      const keysToDelete: string[] = [];
+      mentionDataStore.current.forEach((_, key) => {
+        if (!currentKeys.has(key)) {
+          keysToDelete.push(key);
+        }
+      });
+      keysToDelete.forEach((key) => mentionDataStore.current.delete(key));
+
+      setMentions(enrichedMentions);
+      return enrichedMentions;
+    },
+    [triggers, getMentionKey]
+  );
+
   const registerInput = useCallback(
     (input: {
       value: string;
@@ -59,8 +109,9 @@ export function MentionProvider({
       focus: () => void;
     }) => {
       inputRef.current = input;
+      updateMentions(input.value);
     },
-    []
+    [updateMentions]
   );
 
   const onInputStateChange = useCallback(
@@ -68,6 +119,8 @@ export function MentionProvider({
       if (insertingRef.current) {
         return;
       }
+
+      updateMentions(text);
 
       if (selection.start !== selection.end) {
         setActiveTrigger(null);
@@ -126,7 +179,7 @@ export function MentionProvider({
         setTargetRange(null);
       }
     },
-    [triggers]
+    [triggers, updateMentions]
   );
 
   const insertMention = useCallback(
@@ -142,6 +195,14 @@ export function MentionProvider({
       const inserted = `${activeTrigger}${suggestion.name} `;
       const newValue = before + inserted + after;
 
+      if (suggestion.data && typeof suggestion.data === "object") {
+        const key = getMentionKey(activeTrigger, suggestion.name);
+        mentionDataStore.current.set(
+          key,
+          suggestion.data as Record<string, unknown>
+        );
+      }
+
       insertingRef.current = true;
       setActiveTrigger(null);
       setTargetRange(null);
@@ -151,11 +212,12 @@ export function MentionProvider({
 
       requestAnimationFrame(() => {
         insertingRef.current = false;
+        updateMentions(newValue);
       });
 
       focus();
     },
-    [targetRange, activeTrigger]
+    [targetRange, activeTrigger, getMentionKey, updateMentions]
   );
 
   const contextValue = useMemo(
@@ -163,6 +225,7 @@ export function MentionProvider({
       activeTrigger,
       currentQuery,
       isMentioning: !!activeTrigger,
+      mentions,
       onInputStateChange,
       insertMention,
       registerInput,
@@ -170,6 +233,7 @@ export function MentionProvider({
     [
       activeTrigger,
       currentQuery,
+      mentions,
       onInputStateChange,
       insertMention,
       registerInput,

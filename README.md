@@ -31,15 +31,16 @@ At just **18 kB**, we're **3-5x smaller** than alternatives while providing more
 
 ### 🔒 **Production-Ready**
 
-- **99%+ test coverage** with 9 comprehensive tests
+- **99%+ test coverage** with 16 comprehensive tests
 - **Zero runtime dependencies** (only React & React Native)
 - **100% TypeScript** with full type safety
-- **Clean, professional codebase** – no bloat, no AI-generated comments
+- **Clean, professional codebase**
 
 ### 🚀 **Developer Experience**
 
 - **Simple API** – 3 hooks, 1 provider, 1 component
 - **Smart trigger detection** – Works with @mentions, #hashtags, or any custom trigger
+- **Automatic custom data preservation** – No manual tracking needed
 - **Flexible rendering** – Style mentions with objects, functions, or custom components
 - **Cross-platform** – iOS, Android, and Web
 
@@ -342,6 +343,7 @@ Hook for accessing mention state (for suggestion lists).
   activeTrigger: string | null;     // Current trigger ('@', '#', etc.)
   currentQuery: string;              // Text after trigger ('joh' in '@joh')
   isMentioning: boolean;             // Is user currently mentioning?
+  mentions: MentionRange[];          // All mentions with custom data preserved
   insertMention: (suggestion: MentionSuggestion) => void;
 }
 ```
@@ -353,9 +355,9 @@ interface MentionSuggestion {
   id: string;
   name: string;
   trigger: string;
-  subtitle?: string; // Optional subtitle for list
-  avatar?: string; // Optional avatar URL
-  data?: any; // Any extra data
+  subtitle?: string;
+  avatar?: string;
+  data?: any; // Custom data - automatically preserved!
 }
 ```
 

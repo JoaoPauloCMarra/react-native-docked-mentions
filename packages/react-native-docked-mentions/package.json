@@ -1,0 +1,77 @@
+{
+  "name": "react-native-docked-mentions",
+  "version": "0.1.0",
+  "description": "Headless mention system for React Native with LinkedIn-style functionality. Smart trigger detection, customizable UI, and cross-platform support.",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "watch": "tsc --watch",
+    "test": "bunx jest",
+    "test:watch": "bunx jest --watch",
+    "test:coverage": "bunx jest --coverage",
+    "test:unit": "bunx jest src/__tests__/exports.test.ts src/__tests__/utils.test.ts",
+    "prepublishOnly": "bun run typecheck && bun run test:unit && bun run build"
+  },
+  "keywords": [
+    "react-native",
+    "mentions",
+    "autocomplete",
+    "headless",
+    "linkedin",
+    "chat",
+    "input",
+    "suggestions",
+    "typescript",
+    "ios",
+    "android",
+    "hooks"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JoaoPauloCMarra/react-native-docked-mentions.git"
+  },
+  "homepage": "https://github.com/JoaoPauloCMarra/react-native-docked-mentions#readme",
+  "bugs": {
+    "url": "https://github.com/JoaoPauloCMarra/react-native-docked-mentions/issues"
+  },
+  "author": {
+    "name": "Joao Paulo C Marra",
+    "email": "JoaoPauloCMarra@gmail.com"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-native": ">=0.74.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-native": "^0.73.0",
+    "jest": "^30.2.0",
+    "typescript": "^5.7.2",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-test-renderer": "19.1.0"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  }
+}

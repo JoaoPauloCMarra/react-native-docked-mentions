@@ -1,0 +1,5 @@
+example/* linguist-vendored
+scripts/* linguist-vendored
+config/* linguist-vendored
+*.md linguist-documentation
+*.json linguist-generated

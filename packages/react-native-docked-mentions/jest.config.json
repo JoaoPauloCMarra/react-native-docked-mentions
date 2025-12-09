@@ -1,0 +1,16 @@
+{
+  "preset": "react-native",
+  "setupFilesAfterEnv": ["@testing-library/jest-native/extend-expect"],
+  "transformIgnorePatterns": [
+    "node_modules/(?!(react-native|@react-native|react-native-reanimated|react-native-gesture-handler)/)"
+  ],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx"],
+  "testMatch": ["**/__tests__/**/*.test.ts?(x)"],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "mentions\\.test\\.tsx$",
+    "complex-scenarios\\.test\\.tsx$",
+    "mention-text\\.test\\.tsx$",
+    "coverage\\.test\\.tsx$"
+  ]
+}

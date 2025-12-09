@@ -1,0 +1,8 @@
+a, button, input[type="submit"], input[type="button"], input[type="reset"], input[type="checkbox"], input[type="radio"] {
+  -webkit-tap-highlight-color: transparent;
+}
+*:focus {
+  outline-style: none;
+  box-shadow: none;
+  border-color: transparent;
+}

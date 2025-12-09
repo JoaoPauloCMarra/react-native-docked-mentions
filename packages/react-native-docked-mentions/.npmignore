@@ -1,0 +1,36 @@
+# Development files
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test files
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+coverage/
+.nyc_output/
+
+# Build configuration
+tsconfig.json
+jest.config.json
+babel.config.js
+.eslintrc*
+.prettierrc*
+
+# Source maps (optional - include if you want them in package)
+*.map
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

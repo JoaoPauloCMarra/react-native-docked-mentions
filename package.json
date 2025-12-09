@@ -1,0 +1,35 @@
+{
+  "name": "react-native-docked-mentions-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "example"
+  ],
+  "scripts": {
+    "example": "bun --cwd example",
+    "build": "bun --cwd packages/react-native-docked-mentions build",
+    "test": "bun --cwd packages/react-native-docked-mentions test",
+    "typecheck": "bun --cwd packages/react-native-docked-mentions typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "clean": "rimraf ./node_modules ./packages/*/node_modules ./example/node_modules",
+    "fresh-install": "bun run clean && bun install",
+    "update": "bun run ./scripts/update.ts",
+    "ci:lint": "bun --cwd packages/react-native-docked-mentions typecheck",
+    "ci:test": "bun --cwd packages/react-native-docked-mentions test",
+    "ci:build": "bun --cwd packages/react-native-docked-mentions build",
+    "publish": "bun run ci:lint && bun run ci:test && bun run ci:build && cd packages/react-native-docked-mentions && npm publish --access public"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "eslint": "^9.16.0",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-native": "0.81.5"
+  }
+}

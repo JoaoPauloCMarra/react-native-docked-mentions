@@ -59,6 +59,8 @@ export function MentionProvider({
     new Map()
   );
 
+  const mentionRangesStore = useRef<MentionRange[]>([]);
+
   const getMentionKey = useCallback(
     (trigger: string, name: string) => `${trigger}${name}`,
     []
@@ -66,23 +68,60 @@ export function MentionProvider({
 
   const updateMentions = useCallback(
     (text: string) => {
+      const validStoredMentions: MentionRange[] = [];
+
+      mentionRangesStore.current.forEach((storedMention) => {
+        const { start, end, data } = storedMention;
+
+        if (end <= text.length) {
+          const textAtPosition = text.slice(start, end);
+          const expectedText = `${data.trigger}${data.name}`;
+
+          if (textAtPosition === expectedText) {
+            validStoredMentions.push(storedMention);
+          }
+        }
+      });
+
       const parsedMentions = parseMentions(text, triggers);
 
-      const enrichedMentions = parsedMentions.map((mention) => {
-        const key = getMentionKey(mention.data.trigger, mention.data.name);
-        const customData = mentionDataStore.current.get(key);
+      const mentionMap = new Map<string, MentionRange>();
 
-        if (customData) {
-          return {
-            ...mention,
-            data: {
-              ...mention.data,
-              ...customData,
-            },
-          };
+      validStoredMentions.forEach((mention) => {
+        const key = `${mention.start}-${mention.end}`;
+        mentionMap.set(key, mention);
+      });
+
+      parsedMentions.forEach((parsedMention) => {
+        const key = `${parsedMention.start}-${parsedMention.end}`;
+        if (!mentionMap.has(key)) {
+          const dataKey = getMentionKey(
+            parsedMention.data.trigger,
+            parsedMention.data.name
+          );
+          const customData = mentionDataStore.current.get(dataKey);
+
+          if (customData) {
+            mentionMap.set(key, {
+              ...parsedMention,
+              data: {
+                ...parsedMention.data,
+                ...customData,
+              },
+            });
+          } else {
+            mentionMap.set(key, parsedMention);
+          }
         }
+      });
 
-        return mention;
+      const enrichedMentions = Array.from(mentionMap.values()).sort(
+        (a, b) => a.start - b.start
+      );
+
+      mentionRangesStore.current = enrichedMentions.filter((m) => {
+        const key = getMentionKey(m.data.trigger, m.data.name);
+        return mentionDataStore.current.has(key);
       });
 
       const currentKeys = new Set(
@@ -192,16 +231,33 @@ export function MentionProvider({
 
       const before = value.slice(0, start);
       const after = value.slice(end);
-      const inserted = `${activeTrigger}${suggestion.name} `;
-      const newValue = before + inserted + after;
+      const insertedText = `${activeTrigger}${suggestion.name}`;
+      const insertedWithSpace = `${insertedText} `;
+      const newValue = before + insertedWithSpace + after;
 
-      if (suggestion.data && typeof suggestion.data === "object") {
-        const key = getMentionKey(activeTrigger, suggestion.name);
-        mentionDataStore.current.set(
-          key,
-          suggestion.data as Record<string, unknown>
-        );
-      }
+      const mentionStart = start;
+      const mentionEnd = start + insertedText.length;
+
+      const customData =
+        suggestion.data && typeof suggestion.data === "object"
+          ? (suggestion.data as Record<string, unknown>)
+          : {};
+
+      const key = getMentionKey(activeTrigger, suggestion.name);
+      mentionDataStore.current.set(key, customData);
+
+      const newMentionRange: MentionRange = {
+        start: mentionStart,
+        end: mentionEnd,
+        data: {
+          id: suggestion.id,
+          name: suggestion.name,
+          trigger: activeTrigger,
+          ...customData,
+        },
+      };
+
+      mentionRangesStore.current.push(newMentionRange);
 
       insertingRef.current = true;
       setActiveTrigger(null);

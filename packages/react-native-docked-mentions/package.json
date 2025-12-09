@@ -1,6 +1,6 @@
 {
   "name": "react-native-docked-mentions",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Headless mention system for React Native with LinkedIn-style functionality. Smart trigger detection, customizable UI, and cross-platform support.",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",

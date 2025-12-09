@@ -1,9 +1,5 @@
 import { useRef, useEffect, useState, useCallback, RefObject } from "react";
-import {
-  TextInput,
-  NativeSyntheticEvent,
-  TextInputSelectionChangeEventData,
-} from "react-native";
+import { TextInput, TextInputSelectionChangeEvent } from "react-native";
 import { useMention } from "./mention-provider";
 import { MentionInputProps } from "./types";
 
@@ -11,9 +7,10 @@ export function useMentionInput({
   value,
   onChangeText,
   onSelectionChange,
+  onChangeMentions,
   inputRef,
 }: MentionInputProps & { inputRef?: RefObject<TextInput | null> }) {
-  const { onInputStateChange, registerInput } = useMention();
+  const { onInputStateChange, registerInput, mentions } = useMention();
 
   const [selection, setSelection] = useState({ start: 0, end: 0 });
 
@@ -38,8 +35,12 @@ export function useMentionInput({
     }
   }, [value, onChangeText, registerInput, resolvedRef]);
 
+  useEffect(() => {
+    onChangeMentions?.(mentions);
+  }, [mentions, onChangeMentions]);
+
   const handleSelectionChange = useCallback(
-    (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    (e: TextInputSelectionChangeEvent) => {
       const newSelection = e.nativeEvent.selection;
 
       setSelection(newSelection);

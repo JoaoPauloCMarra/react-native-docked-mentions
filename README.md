@@ -3,7 +3,6 @@
 > **Headless mention system for React Native** – Build LinkedIn-style mentions with complete UI control
 
 [![npm version](https://img.shields.io/npm/v/react-native-docked-mentions.svg)](https://www.npmjs.com/package/react-native-docked-mentions)
-[![npm downloads](https://img.shields.io/npm/dm/react-native-docked-mentions.svg)](https://www.npmjs.com/package/react-native-docked-mentions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue.svg)](https://www.typescriptlang.org/)
 [![Test Coverage](https://img.shields.io/badge/coverage-99%25-brightgreen.svg)](https://github.com/JoaoPauloCMarra/react-native-docked-mentions)
@@ -165,6 +164,268 @@ function ChatScreen() {
   );
 }
 ```
+
+---
+
+## 🎯 Automatic Custom Data Preservation
+
+**Zero boilerplate. Just works.** ✨
+
+The library automatically preserves custom data through the mention lifecycle. Pass any data when inserting a mention, and it's automatically available in `onChangeMentions` and `MentionText` callbacks.
+
+### The Problem (Solved!)
+
+Other libraries lose custom data when text changes. You'd need 30+ lines of manual tracking:
+
+```tsx
+// ❌ OLD WAY - Manual tracking (30+ lines of boilerplate)
+const mentionDataRef = useRef(new Map());
+
+const onMentionInserted = (name, data) => {
+  mentionDataRef.current.set(name, data);
+};
+
+const onTextChange = (text) => {
+  setText(text);
+  const parsed = parseMentions(text, triggers);
+  const enriched = parsed.map((m) => ({
+    ...m,
+    data: { ...m.data, ...mentionDataRef.current.get(m.data.name) },
+  }));
+  setMentions(enriched);
+};
+
+// Must call BEFORE insertMention (timing issue!)
+onMentionInserted(item.name, { profileId: item.id });
+insertMention({ name: item.name, trigger: "@", data: { profileId: item.id } });
+```
+
+### Our Solution
+
+**Just use `onChangeMentions` - everything is automatic:**
+
+```tsx
+// ✅ NEW WAY - Zero boilerplate!
+const [text, setText] = useState("");
+const [mentions, setMentions] = useState([]);
+
+const { textInputProps } = useMentionInput({
+  value: text,
+  onChangeText: setText,
+  onChangeMentions: setMentions, // ← Automatically enriched with custom data!
+});
+
+// Later, insert mention with custom data
+insertMention({
+  id: item.id,
+  name: item.name,
+  trigger: "@",
+  data: {
+    profileId: item.id,
+    avatarUrl: item.avatar,
+    role: item.role,
+    // ... any custom fields you want!
+  },
+});
+
+// Custom data is automatically preserved!
+console.log(mentions[0].data.profileId); // ✅ Works!
+console.log(mentions[0].data.avatarUrl); // ✅ Works!
+console.log(mentions[0].data.role); // ✅ Works!
+```
+
+### Real-World Example
+
+```tsx
+import { useState } from "react";
+import {
+  View,
+  TextInput,
+  FlatList,
+  Text,
+  TouchableOpacity,
+} from "react-native";
+import {
+  MentionProvider,
+  useMentionInput,
+  useMentionState,
+  MentionText,
+} from "react-native-docked-mentions";
+
+function PostComposer() {
+  const [text, setText] = useState("");
+  const [mentions, setMentions] = useState([]);
+
+  // 1. Use onChangeMentions to receive enriched mentions
+  const { textInputProps } = useMentionInput({
+    value: text,
+    onChangeText: setText,
+    onChangeMentions: setMentions, // ← Automatic enrichment!
+  });
+
+  const { isMentioning, currentQuery, insertMention } = useMentionState();
+
+  // 2. Filter users based on query
+  const suggestions = users.filter((u) =>
+    u.name.toLowerCase().includes(currentQuery.toLowerCase())
+  );
+
+  const handlePost = () => {
+    // 3. Save post with mentions containing full custom data
+    savePost({
+      text,
+      mentions, // ← Contains all custom data (profileId, avatarUrl, etc.)
+    });
+  };
+
+  return (
+    <View>
+      <TextInput {...textInputProps} placeholder="What's on your mind?" />
+
+      {isMentioning && (
+        <FlatList
+          data={suggestions}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() =>
+                insertMention({
+                  id: item.id,
+                  name: item.name,
+                  trigger: "@",
+                  data: {
+                    // All this data is automatically preserved!
+                    profileId: item.id,
+                    avatarUrl: item.avatar,
+                    role: item.role,
+                    email: item.email,
+                  },
+                })
+              }
+            >
+              <Text>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+
+      <Button title="Post" onPress={handlePost} />
+    </View>
+  );
+}
+
+function PostDisplay({ post }) {
+  return (
+    <MentionText
+      mentions={post.mentions}
+      onPressMention={(mention) => {
+        // Custom data is available here too!
+        navigateToProfile(mention.profileId); // ✅ Works!
+        console.log(mention.avatarUrl); // ✅ Works!
+        console.log(mention.role); // ✅ Works!
+      }}
+    >
+      {post.text}
+    </MentionText>
+  );
+}
+
+export default function App() {
+  return (
+    <MentionProvider triggers={[{ trigger: "@" }]}>
+      <PostComposer />
+    </MentionProvider>
+  );
+}
+```
+
+### How It Works
+
+1. **Insert mention with custom data** - Pass any data via `MentionSuggestion.data`
+2. **Library stores it internally** - Uses a `Map` for O(1) lookups
+3. **Auto-enrichment on text changes** - Merges custom data with parsed mentions
+4. **Callback with enriched data** - `onChangeMentions` receives full data
+5. **Automatic cleanup** - Removes data for deleted mentions
+
+### Multiple Triggers with Different Data
+
+```tsx
+// User mention
+insertMention({
+  name: "John Doe",
+  trigger: "@",
+  data: {
+    type: "user",
+    profileId: "user_123",
+    avatarUrl: "https://...",
+  },
+});
+
+// Topic mention
+insertMention({
+  name: "react-native",
+  trigger: "#",
+  data: {
+    type: "topic",
+    topicId: "topic_456",
+    followerCount: 1234,
+  },
+});
+
+// Both preserve their custom data automatically!
+mentions[0].data.profileId; // ✅ "user_123"
+mentions[1].data.followerCount; // ✅ 1234
+```
+
+### TypeScript Support
+
+Full type safety with generics:
+
+```tsx
+interface UserMentionData {
+  profileId: string;
+  avatarUrl: string;
+  role: "admin" | "user";
+}
+
+interface TopicMentionData {
+  topicId: string;
+  followerCount: number;
+}
+
+// Type-safe insertion
+insertMention({
+  name: "John",
+  trigger: "@",
+  data: {
+    profileId: "user_123",
+    avatarUrl: "https://...",
+    role: "admin",
+  } as UserMentionData,
+});
+
+// Type-safe callback
+const { textInputProps } = useMentionInput({
+  value: text,
+  onChangeText: setText,
+  onChangeMentions: (mentions) => {
+    mentions.forEach((m) => {
+      if (m.data.trigger === "@") {
+        const userData = m.data as UserMentionData;
+        console.log(userData.profileId); // ✅ Type-safe!
+      }
+    });
+  },
+});
+```
+
+### Benefits
+
+✅ **Zero boilerplate** - No manual tracking needed  
+✅ **Automatic** - Works out of the box  
+✅ **Type-safe** - Full TypeScript support  
+✅ **Performant** - O(1) lookups with Map  
+✅ **Memory efficient** - Auto-cleanup of deleted mentions  
+✅ **Flexible** - Store any data you need
 
 ---
 

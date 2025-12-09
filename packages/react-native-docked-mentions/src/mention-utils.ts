@@ -12,8 +12,9 @@ export function parseMentions(
       "\\$&"
     );
     const maxSpaces = trigger.allowedSpacesCount ?? 0;
+
     const regex = new RegExp(
-      `${escapedTrigger}([\\w-]+(?:\\s+[\\w-]+){0,${maxSpaces}})`,
+      `${escapedTrigger}([\\w-]+(?:[ \\t]+[\\w-]+){0,${maxSpaces}})(?=[ \\t\\n]|[.,!?;:)\\]}'"]|$|[@#])`,
       "g"
     );
 
@@ -24,15 +25,17 @@ export function parseMentions(
       const name = match[1];
       const end = start + content.length;
 
-      mentions.push({
-        start,
-        end,
-        data: {
-          id: content,
-          name,
-          trigger: trigger.trigger,
-        },
-      });
+      if (name) {
+        mentions.push({
+          start,
+          end,
+          data: {
+            id: trigger.trigger + name,
+            name,
+            trigger: trigger.trigger,
+          },
+        });
+      }
     }
   });
 

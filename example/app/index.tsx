@@ -16,7 +16,8 @@ import { router } from "expo-router";
 export default function FeedDemo() {
   const { posts } = usePosts();
 
-  console.log(posts);
+  // debugging result object
+  console.log(JSON.stringify(posts, null, 2));
 
   return (
     <GestureHandlerRootView style={styles.root}>
@@ -72,9 +73,7 @@ export default function FeedDemo() {
                     { trigger: "#" },
                   ]}
                   style={styles.postText}
-                  onPressMention={(data) =>
-                    console.log("Pressed mention:", data)
-                  }
+                  onPressMention={() => {}}
                   mentionStyle={(data) => {
                     if (data.trigger === "@") return styles.personMention;
                     if (data.trigger === "#") return styles.topicMention;

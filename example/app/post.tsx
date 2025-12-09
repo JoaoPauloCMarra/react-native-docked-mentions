@@ -16,6 +16,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
   MentionProvider,
   MentionSuggestion,
+  MentionRange,
   useMentionState,
 } from "react-native-docked-mentions";
 import { usePeopleSearch, useTopicSearch } from "../services/people-service";
@@ -45,8 +46,8 @@ function PostInterface() {
   const postId = params.id as string | undefined;
 
   const [text, setText] = useState("");
-  const { currentQuery, activeTrigger, isMentioning, mentions } =
-    useMentionState();
+  const [mentions, setMentions] = useState<MentionRange[]>([]);
+  const { currentQuery, activeTrigger, isMentioning } = useMentionState();
   const debouncedQuery = useDebounce(currentQuery, 300, activeTrigger);
   const { addPost, updatePost, posts } = usePosts();
 
@@ -60,6 +61,7 @@ function PostInterface() {
       setText("");
     }
   }, [postId, posts]);
+
   const { data: peopleData = [], isLoading: loadingPeople } = usePeopleSearch(
     isMentioning && activeTrigger === "@" ? debouncedQuery : ""
   );
@@ -193,6 +195,7 @@ function PostInterface() {
           <PostInput
             value={text}
             onChangeText={setText}
+            onChangeMentions={setMentions}
             placeholder="What do you want to talk about?"
             placeholderTextColor="#666"
             multiline
